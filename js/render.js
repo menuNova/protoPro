@@ -52,14 +52,14 @@ export function renderMenu() {
                     </div>
                     <div class="card__price">
                         ${Object.keys(item.price).map(key => {
-                            let value = 0;
-                            if (cartData[categoryKey]) {
-                                const cartItem = cartData[categoryKey].items.find(ci => ci.name[data.language] === item.name[data.language]);
-                                if (cartItem && cartItem.count[key]) {
-                                    value = cartItem.count[key];
-                                };
-                            };
-                            return `
+                let value = 0;
+                if (cartData[categoryKey]) {
+                    const cartItem = cartData[categoryKey].items.find(ci => ci.name[data.language] === item.name[data.language]);
+                    if (cartItem && cartItem.count[key]) {
+                        value = cartItem.count[key];
+                    };
+                };
+                return `
                                 <div class="card__portion">
                                     <p class="portion__name">${languageData[data.language].forJs.portion} <span class="portion__size">${key}</span> — <span class="portion__price">${item.price[key]}</span>$</p>
                                     <div class="portion__management">
@@ -68,7 +68,7 @@ export function renderMenu() {
                                         <button class="portion__add" data-category="${categoryKey}" data-index="${index}" data-size="${key}">+</button> 
                                     </div>
                                 </div>`;
-                        }).join('')}
+            }).join('')}
                     </div>
                 </div>`;
 
@@ -115,55 +115,156 @@ export function renderMenu() {
 function updateMenu(categoryName, dishData, index, portionName, action) {
     if (!cartData[categoryName]) {
         cartData[categoryName] = { items: [], name: dishesData[categoryName].name };
-    };
+    }
     const input = document.querySelector(`input[data-category="${categoryName}"][data-index="${index}"][data-size="${portionName}"]`);
     const cardDom = input.parentNode.parentNode.parentNode.parentNode.parentNode;
     let cartItem = cartData[categoryName].items.find(item => item.name[data.language] === dishData.name[data.language]);
 
+    const cartInput = document.querySelector(`.cart__list input[data-category="${categoryName}"][data-index="${index}"][data-size="${portionName}"]`);
+
     if (!cartItem && action === 'add') {
         cartItem = { ...dishData, count: {}, index };
         cartData[categoryName].items.push(cartItem);
-    };
+    }
 
     if (cartItem) {
         if (!cartItem.count[portionName]) {
             cartItem.count[portionName] = 0;
-        };
+        }
+
+        const oldValue = cartItem.count[portionName];
 
         if (action === 'add') {
             cartItem.count[portionName] += 1;
         } else if (action === 'remove' && cartItem.count[portionName] > 0) {
             cartItem.count[portionName] -= 1;
-            if (cartItem.count[portionName] <= 0) {
+        }
+
+        if (input) {
+            input.value = cartItem.count[portionName] || 0;
+        }
+
+        if (cartInput) {
+            cartInput.value = cartItem.count[portionName] || 0;
+        }
+        else if (!cartInput && cartItem.count[portionName] > 0) {
+            let categorySection = document.querySelector(`.cart__list #${categoryName}`);
+
+            if (!categorySection) {
+                categorySection = document.createElement('section');
+                categorySection.classList.add('section');
+                categorySection.id = categoryName;
+                categorySection.innerHTML = `
+                    <h2>${dishesData[categoryName].name[data.language]}</h2>
+                    <div class="section__list"></div>
+                `;
+                const cartList = document.querySelector('.cart__list');
+                const totalElement = cartList.querySelector('.cart__total');
+                cartList.insertBefore(categorySection, totalElement);
+            }
+
+            let cartCard = categorySection.querySelector(`.${categoryName}-${index}`);
+
+            if (!cartCard) {
+                cartCard = document.createElement('div');
+                cartCard.classList.add('card', `card-num_${index}`, `${categoryName}-${index}`);
+                cartCard.id = `dish-${index}`;
+                cartCard.innerHTML = `
+                    <div class="card__img">
+                        <img src="${dishData.img}" alt="">
+                    </div>
+                    <div class="card__content">
+                        <div class="card__info">
+                            <h3 class="card__name">${dishData.name[data.language]}</h3>
+                            <p class="card__description">${dishData.description[data.language]}</p>
+                        </div>
+                        <div class="card__price"></div>
+                    </div>
+                `;
+                categorySection.querySelector('.section__list').appendChild(cartCard);
+            }
+
+            let portionElement = cartCard.querySelector(`.size-${portionName}`);
+            if (!portionElement) {
+                const priceContainer = cartCard.querySelector('.card__price');
+                const portionDiv = document.createElement('div');
+                portionDiv.classList.add('card__portion');
+                portionDiv.innerHTML = `
+                    <p class="portion__name">${languageData[data.language].forJs.portion} <span class="portion__size">${portionName}</span> — <span class="portion__price">${dishData.price[portionName]}</span>$</p>
+                    <div class="portion__management">
+                        <button class="portion__remove" data-category="${categoryName}" data-index="${index}" data-size="${portionName}">-</button> 
+                        <input type="number" disabled class="portion__count size-${portionName}" data-category="${categoryName}" data-index="${index}" data-size="${portionName}" value="${cartItem.count[portionName]}">
+                        <button class="portion__add" data-category="${categoryName}" data-index="${index}" data-size="${portionName}">+</button> 
+                    </div>
+                `;
+                priceContainer.appendChild(portionDiv);
+
+                const addButton = portionDiv.querySelector('.portion__add');
+                const removeButton = portionDiv.querySelector('.portion__remove');
+
+                addButton.addEventListener('click', () => {
+                    updateMenu(categoryName, dishData, index, portionName, 'add');
+                });
+
+                removeButton.addEventListener('click', () => {
+                    if (cartItem.count[portionName] === 1) {
+                        showConfirmationPopup(() => {
+                            updateMenu(categoryName, dishData, index, portionName, 'remove');
+                        });
+                    } else {
+                        updateMenu(categoryName, dishData, index, portionName, 'remove');
+                    }
+                });
+            } else {
+                portionElement.value = cartItem.count[portionName];
+            }
+        }
+
+        const totalPortions = Object.values(cartItem.count).reduce((sum, count) => sum + count, 0);
+
+        if (cartInput && cartItem.count[portionName] === 0) {
+            const portionElement = cartInput.closest('.card__portion');
+            if (portionElement) {
+                portionElement.remove();
                 delete cartItem.count[portionName];
-            };
-        };
+            }
+        }
 
-        if (Object.keys(cartItem.count).length === 0) {
-            cartData[categoryName].items = cartData[categoryName].items.filter(item => item.name[data.language] !== cartItem.name[data.language]);
-        };
-    };
+        if (totalPortions === 0) {
+            const cartCard = document.querySelector(`.cart__list .${categoryName}-${index}`);
+            if (cartCard) {
+                cartCard.remove();
+                cartData[categoryName].items = cartData[categoryName].items.filter(item =>
+                    item.name[data.language] !== cartItem.name[data.language]
+                );
+            }
 
-    if (cartData[categoryName] && cartData[categoryName].items.length === 0) {
-        delete cartData[categoryName];
-    };
+            if (cartData[categoryName].items.length === 0) {
+                const categorySection = document.querySelector(`.cart__list #${categoryName}`);
+                if (categorySection) {
+                    categorySection.remove();
+                }
+                delete cartData[categoryName];
+            }
+        }
+    }
 
-    if (input) {
-        const value = cartItem && cartItem.count[portionName] ? cartItem.count[portionName] : 0;
-        input.value = value;
-    };
-
-    const card = document.querySelector(`.${categoryName}-${index}`);
-    if (card) {
-        if (cartData[categoryName] && cartData[categoryName].items.some(item => item.name[data.language] === dishData.name[data.language])) {
-            card.classList.add('_inCart');
+    if (cardDom) {
+        if (cartData[categoryName] && cartData[categoryName].items.some(item =>
+            Object.values(item.count).reduce((sum, count) => sum + count, 0) > 0
+        )) {
+            cardDom.classList.add('_inCart');
         } else {
-            card.classList.remove('_inCart');
-        };
-    };
+            cardDom.classList.remove('_inCart');
+        }
+    }
 
-    renderCart();
-};
+    const totalPrice = calculateTotalPrice();
+    const totalElement = document.querySelector('.cart__total h2');
+    if (totalElement) {
+        totalElement.innerHTML = `${languageData[data.language]['forJs'].total} ${totalPrice}${data.valute}`;
+    }
+}
 
 function showConfirmationPopup(onConfirm) {
     const popup = document.querySelector('.popup_sure');
@@ -191,6 +292,8 @@ function showConfirmationPopup(onConfirm) {
 
 export function renderCart() {
     const cartList = document.querySelector('.cart__list');
+    const scrollPosition = cartList.scrollTop;
+
     cartList.innerHTML = '';
 
     Object.keys(cartData).forEach(categoryKey => {
@@ -285,6 +388,8 @@ export function renderCart() {
     totalElement.classList.add('cart__total');
     totalElement.innerHTML = `<h2>${languageData[data.language]['forJs'].total} ${totalPrice}${data.valute}</h2>`;
     cartList.appendChild(totalElement);
+
+    cartList.scrollTop = scrollPosition;
 };
 
 function calculateTotalPrice() {
