@@ -262,8 +262,9 @@ function updateMenu(categoryName, dishData, index, portionName, action) {
     const totalPrice = calculateTotalPrice();
     const totalElement = document.querySelector('.cart__total h2');
     if (totalElement) {
-        totalElement.innerHTML = `${languageData[data.language]['forJs'].total} ${totalPrice}${data.valute}`;
-    }
+        totalElement.innerHTML = `${languageData[data.language]['forJs'].total}: ${totalPrice}${data.valute}`;
+    };
+    console.log('Общая сумма:', totalPrice + data.valute);
 }
 
 function showConfirmationPopup(onConfirm) {
@@ -384,16 +385,18 @@ export function renderCart() {
     });
 
     const totalPrice = calculateTotalPrice();
-    const totalElement = document.createElement('div');
-    totalElement.classList.add('cart__total');
-    totalElement.innerHTML = `<h2>${languageData[data.language]['forJs'].total} ${totalPrice}${data.valute}</h2>`;
-    cartList.appendChild(totalElement);
+    const totalSection = document.createElement('section');
+    totalSection.classList.add('cart__total');
+    totalSection.innerHTML = `<h2>${languageData[data.language]['forJs'].total}: ${totalPrice}${data.valute}</h2>`;
+
+    const cartSection = document.querySelector('.cart');
+    cartSection.appendChild(totalSection);
 
     cartList.scrollTop = scrollPosition;
 };
 
 function calculateTotalPrice() {
-    return Object.keys(cartData).reduce((total, categoryKey) => {
+    const total = Object.keys(cartData).reduce((total, categoryKey) => {
         return total + cartData[categoryKey].items.reduce((sum, item) => {
             return sum + Object.keys(item.price).reduce((subTotal, size) => {
                 const count = item.count[size] || 0;
@@ -401,7 +404,9 @@ function calculateTotalPrice() {
             }, 0);
         }, 0);
     }, 0);
-};
+
+    return total.toFixed(2);
+}
 
 export function renderText() {
     Object.keys(languageData[data.language]).forEach(el => {
