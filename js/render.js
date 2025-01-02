@@ -130,24 +130,39 @@ function updateMenu(categoryName, dishData, index, portionName, action) {
     if (cartItem) {
         if (!cartItem.count[portionName]) {
             cartItem.count[portionName] = 0;
-        }
-
-        const oldValue = cartItem.count[portionName];
+        };
 
         if (action === 'add') {
             cartItem.count[portionName] += 1;
         } else if (action === 'remove' && cartItem.count[portionName] > 0) {
             cartItem.count[portionName] -= 1;
-        }
+        };
 
+        
+
+        try {
+            const item = cartData[categoryName].items.find(item=> item.name[data.language] === dishData.name[data.language]);
+
+            let sum = 0;
+            for (let key in item.count) {
+                sum += item.count[key] * item.price[key];
+            };
+            if (sum > 0) {
+                cardDom.classList.add('_inCart');
+            } else {
+                cardDom.classList.remove('_inCart');
+            };
+        } catch (error) {
+            let a = 1;            
+        };
+        
         if (input) {
             input.value = cartItem.count[portionName] || 0;
-        }
+        };
 
         if (cartInput) {
             cartInput.value = cartItem.count[portionName] || 0;
-        }
-        else if (!cartInput && cartItem.count[portionName] > 0) {
+        } else if (!cartInput && cartItem.count[portionName] > 0) {
             let categorySection = document.querySelector(`.cart__list #${categoryName}`);
 
             if (!categorySection) {
@@ -161,7 +176,7 @@ function updateMenu(categoryName, dishData, index, portionName, action) {
                 const cartList = document.querySelector('.cart__list');
                 const totalElement = cartList.querySelector('.cart__total');
                 cartList.insertBefore(categorySection, totalElement);
-            }
+            };
 
             let cartCard = categorySection.querySelector(`.${categoryName}-${index}`);
 
@@ -217,8 +232,10 @@ function updateMenu(categoryName, dishData, index, portionName, action) {
                 });
             } else {
                 portionElement.value = cartItem.count[portionName];
-            }
-        }
+            };
+        };
+
+
 
         const totalPortions = Object.values(cartItem.count).reduce((sum, count) => sum + count, 0);
 
@@ -247,24 +264,16 @@ function updateMenu(categoryName, dishData, index, portionName, action) {
                 delete cartData[categoryName];
             }
         }
-    }
+    };
 
-    if (cardDom) {
-        if (cartData[categoryName] && cartData[categoryName].items.some(item =>
-            Object.values(item.count).reduce((sum, count) => sum + count, 0) > 0
-        )) {
-            cardDom.classList.add('_inCart');
-        } else {
-            cardDom.classList.remove('_inCart');
-        }
-    }
+
+
 
     const totalPrice = calculateTotalPrice();
     const totalElement = document.querySelector('.cart__total h2');
     if (totalElement) {
         totalElement.innerHTML = `${languageData[data.language]['forJs'].total}: ${totalPrice}${data.valute}`;
     };
-    console.log('Общая сумма:', totalPrice + data.valute);
 }
 
 function showConfirmationPopup(onConfirm) {
