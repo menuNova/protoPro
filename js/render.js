@@ -20,7 +20,6 @@ export function renderMenu() {
             navLink.classList.add('_active');
             document.querySelector(`#${categoryKey}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
         };
-        navContainer.appendChild(navLink);
 
         const section = document.createElement('section');
         section.classList.add('section');
@@ -31,6 +30,11 @@ export function renderMenu() {
         dishesList.classList.add('section__list');
 
         category.items.forEach((item, index) => {
+            if (!item.inStore) {
+                return;
+            };
+
+
             const card = document.createElement('div');
             card.classList.add('card', `card-num_${index}`, `${categoryKey}-${index}`);
             card.id = `dish-${index}`;
@@ -102,10 +106,15 @@ export function renderMenu() {
             dishesList.appendChild(card);
         });
 
-        section.appendChild(dishesList);
-        dishesContainer.appendChild(section);
-    });
 
+        section.appendChild(dishesList);
+
+        if (section.querySelector('.card')) {
+            dishesContainer.appendChild(section);
+            navContainer.appendChild(navLink);
+        };
+    });
+    
     const firstNavLink = navContainer.querySelector('.dishes__link');
     if (firstNavLink) {
         firstNavLink.classList.add('_active');

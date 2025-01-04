@@ -63,7 +63,8 @@ function processData(data) {
                 en: item['description-en'],
                 de: item['description-de'],
             },
-            img: item['img']
+            img: item['img'],
+            inStore: item['in-store']
         };
 
         for (let i = 1; i <= 3; i++) {
