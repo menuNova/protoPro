@@ -5,7 +5,7 @@
     --color1-5: #f4f9fbc5;
     --color2: #f9b7bf;
     --color3: #87232f;
-    --color3-4: #87232f5e;
+    --color3-4: #87232f35;
     --color4: #030303;
 }
 
@@ -14,8 +14,13 @@
     --color1: #060606;
     --color1-1: #120f0c59;
     --color1-5: #150b04c5;
-    --color2: #39090f;
+    --color2: #470c13;
     --color3: #c2404f;
-    --color3-4: #c2404f5e;
+    --color3-4: #c2404f35;
     --color4: #f4f9fb;
+}
+
+
+:root {
+    --maxWidth: 700px;
 }
